@@ -1,6 +1,6 @@
 from pathlib import Path
-from config import CHUNK_SIZE, OVERLAP_SIZE
-from .text_extraction import extract_text_from_pdf
+from semantic_search_engine.config import CHUNK_SIZE, OVERLAP_SIZE
+from semantic_search_engine.ingestion.text_extraction import extract_text_from_pdf
 
 
 def chunking(
