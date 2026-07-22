@@ -400,6 +400,8 @@ src/
     └── main.py
 ```
 
+> Note: `config.py` is currently omitted from this repository for development and local configuration purposes.
+
 ---
 
 ## Future Improvements
@@ -408,6 +410,7 @@ Planned improvements:
 
 - Semantic chunking
 - Structure-aware chunking
+- Support for multiple file formats (beyond PDF)
 - Hybrid retrieval:
   - TF-IDF + embeddings
 - Vector database integration
