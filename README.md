@@ -400,8 +400,6 @@ src/
     └── main.py
 ```
 
-> Note: `config.py` is currently omitted from this repository for development and local configuration purposes.
-
 ---
 
 ## Future Improvements
