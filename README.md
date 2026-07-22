@@ -417,6 +417,7 @@ Planned improvements:
 - Metadata filtering
 - Query expansion
 - Reranking models
+- multiple file formate acceptance
 - Retrieval-Augmented Generation (RAG)
 
 ---
