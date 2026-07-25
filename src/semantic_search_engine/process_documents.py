@@ -1,4 +1,6 @@
 from pathlib import Path
+from docling.document_converter import DocumentConverter
+
 
 from semantic_search_engine.ingestion import chunking, document_loader
 from semantic_search_engine.ingestion.representation.embedding import EmbeddingModel
@@ -15,12 +17,16 @@ def ingestion():
 
     file_paths = document_loader.get_file_path(DATA_DIR)
     embedding_model = EmbeddingModel()
+    document_converter = DocumentConverter()
     all_chunks = []
 
     print(f"Chunking with size {CHUNK_SIZE} and overlap {OVERLAP_SIZE}")
     for pdf_path in file_paths:
-        chunks = chunking.chunking(
-            pdf_path=pdf_path, chunk_size=CHUNK_SIZE, overlap_size=OVERLAP_SIZE
+        chunks = chunking.chunk_docs(
+            pdf_path=pdf_path,
+            converter=document_converter,
+            chunk_size=CHUNK_SIZE,
+            overlap_size=OVERLAP_SIZE,
         )
         all_chunks.extend(chunks)
 

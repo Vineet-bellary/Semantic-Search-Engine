@@ -2,9 +2,7 @@ import os
 import torch
 from sentence_transformers import SentenceTransformer
 
-from semantic_search_engine.config import EMBEDDING_MODEL, HUGGINGFACE_TOKEN_ID
-
-os.environ["HF_TOKEN"] = HUGGINGFACE_TOKEN_ID
+from semantic_search_engine.config import EMBEDDING_MODEL, HF_TOKEN
 
 
 class EmbeddingModel:
@@ -14,7 +12,9 @@ class EmbeddingModel:
         self.model = self.load_model()
 
     def load_model(self):
-        model = SentenceTransformer(self.model_name, device=self.device)
+        model = SentenceTransformer(
+            self.model_name, device=self.device, token=HF_TOKEN, local_files_only=True
+        )
         return model
 
     def embed_chunks(self, chunks: list[dict]):

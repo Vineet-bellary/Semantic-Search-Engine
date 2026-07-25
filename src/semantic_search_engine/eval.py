@@ -2,8 +2,6 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
-import torch
-
 from semantic_search_engine.config import DATA_DIR, INGESTED_DATA_DIR
 from semantic_search_engine.ingestion.representation.embedding import EmbeddingModel
 from semantic_search_engine.retrieval.process_query import (
@@ -12,6 +10,7 @@ from semantic_search_engine.retrieval.process_query import (
 )
 from semantic_search_engine.retrieval.similarity import rank_chunks
 from semantic_search_engine.utils.save_load_metadata import load_ingested_data
+from semantic_search_engine.process_documents import ingestion
 
 
 def prepare_query(query: str, embedding_model: EmbeddingModel):
@@ -46,10 +45,7 @@ def normalize_document_name(document_name: str) -> str:
 
 
 def evaluate(evaluation_json_path: Path, k_values: tuple[int, ...] = (1, 3)):
-    if not (INGESTED_DATA_DIR.exists() and any(INGESTED_DATA_DIR.iterdir())):
-        raise FileNotFoundError(
-            f"Ingested data not found in {INGESTED_DATA_DIR}. Run ingestion first."
-        )
+    ingestion()
 
     embedding_model = EmbeddingModel()
     device = embedding_model.device
