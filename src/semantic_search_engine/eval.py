@@ -2,7 +2,7 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
-from semantic_search_engine.config import DATA_DIR, INGESTED_DATA_DIR
+from semantic_search_engine.config import INGESTED_DATA_DIR, TEST_DIR
 from semantic_search_engine.ingestion.representation.embedding import EmbeddingModel
 from semantic_search_engine.retrieval.process_query import (
     preprocess_query,
@@ -14,11 +14,28 @@ from semantic_search_engine.process_documents import ingestion
 
 
 def prepare_query(query: str, embedding_model: EmbeddingModel):
+    """Preprocess the query and generate its embedding vector using the embedding model.
+
+    Args:
+        query (str): The input query string.
+        embedding_model (EmbeddingModel): The embedding model to use.
+
+    Returns:
+        list[float]: The embedding vector of the preprocessed query.
+    """
     preprocessed_query = preprocess_query(query)
     return embedding_model.embed_query(preprocessed_query)
 
 
 def load_evaluation_queries(json_path: Path) -> list[dict]:
+    """Load evaluation queries from a JSON file.
+
+    Args:
+        json_path (Path): The path to the JSON file containing evaluation queries.
+
+    Returns:
+        list[dict]: A list of evaluation queries, each represented as a dictionary.
+    """
     with open(json_path, "r", encoding="utf-8") as f:
         payload = json.load(f)
 
@@ -41,10 +58,21 @@ def load_evaluation_queries(json_path: Path) -> list[dict]:
 
 
 def normalize_document_name(document_name: str) -> str:
+    """Normalize the document name by extracting the base name without the directory path."""
     return Path(document_name).name
 
 
 def evaluate(evaluation_json_path: Path, k_values: tuple[int, ...] = (1, 3)):
+    """
+    Evaluate the semantic search engine using a set of evaluation queries.
+
+    Args:
+        evaluation_json_path (Path): The path to the JSON file containing evaluation queries.
+        k_values (tuple[int, ...], optional): The values of k for Accuracy@k evaluation. Defaults to (1, 3).
+
+    Returns:
+        None
+    """
     ingestion()
 
     embedding_model = EmbeddingModel()
@@ -165,7 +193,7 @@ def evaluate(evaluation_json_path: Path, k_values: tuple[int, ...] = (1, 3)):
 
 
 def main():
-    evaluation_json_path = DATA_DIR / "evaluation_queries.json"
+    evaluation_json_path = TEST_DIR / "evaluation_queries.json"
     evaluate(evaluation_json_path, k_values=(1, 3))
 
 

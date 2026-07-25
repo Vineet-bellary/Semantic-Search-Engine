@@ -10,13 +10,11 @@ HF_TOKEN = os.getenv("HUGGINGFACE_TOKEN_ID")
 
 # Storage directories
 DATA_DIR = ROOT_DIR / "data"
+TEST_DIR = ROOT_DIR / "test"
 INGESTED_DATA_DIR = ROOT_DIR / "ingested_data"
 
 # Paramters
-CHUNK_SIZE = 150
-OVERLAP_SIZE = 0
-
-CONFIDENCE_THRESHOLD = 0.5
+CONFIDENCE_THRESHOLD = 0.1
 
 # Models
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"

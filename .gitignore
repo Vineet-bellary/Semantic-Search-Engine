@@ -3,3 +3,4 @@ __pycache__/
 data/
 ingested_data/
 .env
+tests/

@@ -15,6 +15,14 @@ embedding_model = EmbeddingModel()
 
 
 def prepare_query(query: str) -> list[float]:
+    """Preprocess the query and generate its embedding vector using the embedding model.
+
+    Args:
+        query (str): The input query string.
+
+    Returns:
+        list[float]: The embedding vector of the preprocessed query.
+    """
     preprocessed_query = preprocess_query(query)
 
     query_vector = embedding_model.embed_query(preprocessed_query)
@@ -23,6 +31,12 @@ def prepare_query(query: str) -> list[float]:
 
 
 def search():
+    """
+    Perform semantic search on the ingested data based on the user's query.
+    This function loads the ingested data, validates the user's query, generates the query embedding,
+    and ranks the chunks based on their similarity to the query. It then displays the top relevant chunks to the user.
+    """
+    
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -43,10 +57,11 @@ def search():
         chunk = chunks[idx]
 
         suggestion = (
+            f"Chunk ID: {chunk['chunk_id']}\n"
             f"Document Name: {chunk['document_name']}\n"
-            f"Page Number: {chunk['page_number']}\n"
+            f"heading_path: {chunk['heading_path']}\n"
             f"Score: {score.item():.2f}\n"
-            f"\nChunk Text:\n{chunk['text_chunk']}\n"
+            f"\nChunk Text:\n{chunk['text_chunk'][:50]}\n"
         )
 
         print(f"{'-' * 15} : {sl_no + 1} : {'-' * 15}\n{suggestion}\n{'-' * 100}\n")

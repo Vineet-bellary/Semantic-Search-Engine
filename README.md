@@ -1,52 +1,57 @@
 # Semantic Search Engine
 
-A lightweight semantic search system that retrieves relevant information from a collection of documents using both traditional lexical retrieval and dense vector representations.
+A lightweight semantic search system built from scratch to understand and engineer a complete retrieval pipeline for personal document search.
 
-The project was built from scratch to understand and engineer the complete retrieval pipeline:
+The project focuses on document ingestion, retrieval optimization, embedding-based search, and evaluation-driven improvements.
 
-```
+## Overview
+
+### System pipeline
+
+```text
 Documents
     |
     v
-Text Extraction
+PDF Conversion
     |
     v
-Chunking
+Markdown Structure Extraction
     |
     v
-Text Representation
+Retrieval-Optimized Chunking
     |
     v
-Vector Index
+Embedding Generation
     |
     v
-Query Retrieval
+Vector Search
     |
     v
 Ranked Results
 ```
 
----
-
 ## Features Implemented
 
 ### Multi-document ingestion
 
-- Supports ingestion of multiple PDF documents from a data directory.
-- Automatically discovers PDF files.
-- Extracts document metadata:
-  - Document name
-  - Page number
-  - Text content
+- Supports ingestion of multiple PDF documents.
+- Automatically discovers documents from the data directory.
+- Converts PDFs into Markdown representation.
+- Preserves document structure using heading paths.
 
-Example chunk schema:
+### Retrieval-optimized chunks
+
+Current chunk format:
 
 ```json
 {
-  "chunk_id": "document_name_page_chunk",
-  "document_name": "example.pdf",
-  "page_number": 3,
-  "text_chunk": "content extracted from document"
+  "chunk_id": 0,
+  "document_name": "artificial_intelligence_and_machine_learning",
+  "heading_path": [
+    "Foundations of Artificial Intelligence and Machine Learning",
+    "1. Introduction to Machine Learning Fundamentals (Part 1)"
+  ],
+  "text_chunk": "Machine learning represents a paradigm shift..."
 }
 ```
 
@@ -54,302 +59,195 @@ Example chunk schema:
 
 ## Version 0: TF-IDF Retrieval System
 
-### Overview
-
-Implemented a classical information retrieval pipeline using TF-IDF representations.
+Implemented a classical information retrieval pipeline.
 
 Pipeline:
 
-```
+```text
 PDF Documents
-
       |
       v
-
 Text Extraction
-
       |
       v
-
-Fixed-size Chunking
-
+Fixed-Size Chunking
       |
       v
-
 TF-IDF Vectorization
-
       |
       v
-
 Cosine Similarity Search
-
       |
       v
-
-Top-K Ranked Results
+Top-K Results
 ```
 
----
-
-### Components
-
-#### Text Extraction
-
-Implemented PDF parsing pipeline using `pypdf`.
-
-Extracted:
-
-- Page-level text
-- Document metadata
-- Page references
-
----
-
-#### Chunking
-
-Implemented configurable fixed-size chunking.
-
-Parameters:
-
-```python
-chunk_size
-overlap_size
-```
-
-Experimented with different chunk sizes:
-
-| Chunk Size | Accuracy@1 | Accuracy@3 |
-| ---------- | ---------: | ---------: |
-| 100        |     26.19% |     57.14% |
-| 125        |     30.95% |     52.38% |
-| 150        |     30.95% |     64.29% |
-| 175        |     35.71% |     59.52% |
-| 200        |     33.33% |     52.38% |
-| 250        |     23.81% |     52.38% |
-| 300        |     21.43% |     42.86% |
-
-Best TF-IDF configuration:
-
-```
-Chunk Size: 175
-Accuracy@1: 35.71%
-Accuracy@3: 59.52%
-```
-
----
-
-#### Retrieval
-
-Implemented cosine similarity ranking:
-
-```
-Query
- |
- v
-TF-IDF Vector
- |
- v
-Similarity against document chunks
- |
- v
-Top-K chunks
-```
-
-Returned:
-
-- Document name
-- Page number
-- Similarity score
-- Relevant text chunk
+This version was used to understand traditional lexical retrieval.
 
 ---
 
 ## Version 1: Dense Embedding Retrieval
 
-### Motivation
+TF-IDF was limited by keyword overlap.
 
-TF-IDF relies on exact keyword overlap.
+The system was upgraded to semantic retrieval using dense embeddings.
 
-To support semantic matching:
+Embedding pipeline:
 
-Example:
-
-```
-Query:
-"How do neural networks learn?"
-
-Document:
-"Deep architectures optimize parameters using gradient descent..."
-```
-
-The system was upgraded to use dense embeddings.
-
----
-
-## Embedding Pipeline
-
-Implemented using a pretrained Sentence Transformer model.
-
-Pipeline:
-
-```
+```text
 Text Chunk
-
-      |
-      v
-
+    |
+    v
 Sentence Transformer
-
-      |
-      v
-
-384-dimensional embedding vector
-
-      |
-      v
-
-Vector similarity search
+    |
+    v
+384-dimensional embedding
+    |
+    v
+Similarity Search
 ```
 
 Current embedding model:
 
-```
+```text
 all-MiniLM-L6-v2
 ```
 
-Embedding output:
+Similarity ranking uses cosine similarity.
 
+---
+
+## Version 2: Document Structure Experiments
+
+Experimented with structure-aware chunking approaches.
+
+Goals:
+
+- Preserve document hierarchy.
+- Improve semantic retrieval.
+- Avoid splitting related information.
+
+Experiments included Docling-based chunking strategies.
+
+Observation:
+
+Document structure alone is not enough. Chunks need to be optimized for retrieval rather than only representing document hierarchy.
+
+---
+
+## Version 3: Markdown-Based Retrieval-Optimized Chunking
+
+The current ingestion architecture.
+
+### Motivation
+
+Instead of relying on generic chunkers, the system converts documents into Markdown and builds chunks using:
+
+- Section headings
+- Heading hierarchy
+- Section content
+- Maximum chunk size constraints
+
+This keeps meaningful context together while producing retrieval-friendly chunks.
+
+Pipeline:
+
+```text
+PDF
+ |
+ v
+Docling Converter
+ |
+ v
+Markdown Document
+ |
+ v
+Heading Parser
+ |
+ v
+Retrieval Chunker
+ |
+ v
+Embeddings
+ |
+ v
+Vector Index
 ```
-387 chunks
 
-↓
+Current chunk statistics:
 
-torch.Size([387, 384])
+```text
+Total chunks: 165
+
+Minimum chunk size: 254
+Maximum chunk size: 327
+Average chunk size: 279.12
 ```
 
 ---
 
-## Storage Design
+## Retrieval System
 
-Separated metadata and vector storage.
+Query flow:
 
-### chunks.json
-
-Stores document metadata:
-
-```json
-{
-  "chunk_id": "...",
-  "document_name": "...",
-  "page_number": "...",
-  "text_chunk": "..."
-}
-```
-
-### embeddings.pt
-
-Stores dense vectors:
-
-```
-Tensor:
-(number_of_chunks, embedding_dimension)
-```
-
-Example:
-
-```
-torch.Size([387,384])
-```
-
----
-
-## Retrieval Architecture
-
-Current retrieval flow:
-
-```
+```text
 User Query
-
     |
     v
-
 Sentence Transformer
-
     |
     v
-
 Query Embedding
-
     |
     v
-
 Cosine Similarity
-
     |
     v
-
-torch.topk()
-
+Top-K Chunks
     |
     v
-
-Relevant Chunk Indices
-
-    |
-    v
-
-Document Results
+Document + Heading + Content
 ```
 
-Ranking implemented using PyTorch cosine similarity.
+Returned information:
+
+- Document name
+- Heading path
+- Similarity score
+- Relevant text chunk
 
 ---
 
 ## Evaluation Framework
 
-Built an automated evaluation pipeline.
+The project includes an evaluation pipeline.
 
-Features:
+Metrics:
 
-- JSON-based evaluation queries
-- Automated retrieval testing
-- Accuracy@1 measurement
-- Accuracy@3 measurement
-- Chunking strategy comparison
-
-Evaluation metrics:
-
-```
+```text
 Accuracy@1:
-Did the first retrieved result contain the expected answer?
+First retrieved result contains expected information
 
 Accuracy@3:
-Was the answer present in the top three retrieved results?
+Expected information appears in top three results
 ```
 
----
+Evaluation workflow:
 
-## Embedding Retrieval Experiments
-
-Tested different chunking strategies.
-
-| Chunk Configuration | Accuracy@1 | Accuracy@3 |
-| ------------------- | ---------: | ---------: |
-| 100                 |     11.90% |     38.10% |
-| 125                 |     40.48% |     54.76% |
-| 150                 |     21.43% |     52.38% |
-| 150 + overlap 50    |     14.29% |     54.76% |
-| 200                 |     11.90% |     38.10% |
-| 250                 |      9.52% |     35.71% |
-
-Best embedding configuration:
-
-```
-Chunk Size: 125 words
-Overlap: 0
-
-Accuracy@1: 40.48%
-Accuracy@3: 54.76%
+```text
+Query
+ |
+ v
+Search System
+ |
+ v
+Top-K Results
+ |
+ v
+Compare With Expected Result
+ |
+ v
+Calculate Retrieval Accuracy
 ```
 
 ---
@@ -358,20 +256,19 @@ Accuracy@3: 54.76%
 
 Implemented:
 
-- Modular project architecture
+- Modular Python package architecture
 - Separate ingestion and retrieval pipelines
 - Config-driven parameters
 - Persistent ingestion artifacts
 - Evaluation framework
-- Package-based Python structure
-- GPU-aware embedding generation
+- GPU-accelerated embedding generation
 - Reproducible experiments
 
 ---
 
 ## Project Structure
 
-```
+```text
 semantic-search-engine/
 
 src/
@@ -380,19 +277,14 @@ src/
     |
     ├── ingestion/
     │   ├── document_loader.py
-    │   ├── text_extraction.py
-    │   ├── chunking.py
+    │   ├── doc_to_markdown.py
+    │   ├── markdown_chunker.py
+    │   ├── retrieval_chunker.py
     │   └── representation/
-    │       ├── vectorization.py
-    │       └── embedding.py
+    │       ├── embedding.py
+    │       └── vectorization.py
     |
     ├── retrieval/
-    │   ├── query.py
-    │   ├── similarity.py
-    │   └── process_query.py
-    |
-    ├── utils/
-    │   └── save_load_metadata.py
     |
     ├── evaluation/
     |
@@ -404,18 +296,15 @@ src/
 
 ## Future Improvements
 
-Planned improvements:
+Planned:
 
-- Semantic chunking
-- Structure-aware chunking
-- Support for multiple file formats (beyond PDF)
-- Hybrid retrieval:
-  - TF-IDF + embeddings
-- Vector database integration
+- Hybrid retrieval (BM25 + embeddings)
 - Metadata filtering
-- Query expansion
 - Reranking models
-- multiple file formate acceptance
+- Better evaluation datasets
+- Multiple file format support
+- Vector database integration
+- Query expansion
 - Retrieval-Augmented Generation (RAG)
 
 ---
@@ -424,8 +313,8 @@ Planned improvements:
 
 Through this project:
 
-- Designed an end-to-end information retrieval system.
-- Compared lexical and semantic retrieval approaches.
+- Designed an end-to-end semantic retrieval system.
+- Compared lexical and semantic retrieval methods.
+- Learned how chunking impacts retrieval quality.
 - Built evaluation-driven optimization workflows.
-- Learned how chunking affects retrieval quality.
-- Implemented dense vector search without relying on frameworks such as LangChain.
+- Implemented dense retrieval without depending on frameworks like LangChain.

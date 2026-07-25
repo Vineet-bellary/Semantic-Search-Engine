@@ -1,5 +1,4 @@
 from pathlib import Path
-from pprint import pprint
 import re
 
 from semantic_search_engine.ingestion.document_loader import get_file_path
@@ -57,12 +56,18 @@ def get_heading(line: str):
     return None
 
 
-def extract_sections_from_markdown(md_path: Path):
+def extract_sections_from_markdown(md_path: Path) -> list[dict[str, str]]:
     """
     Extract sections from a Markdown file based on headings.
 
     Args:
         md_path (Path): Path to the Markdown file.
+
+    Returns:
+        list[dict[str, str]]: List of sections extracted from the Markdown file.
+    Each section is represented as a dictionary with the following keys:
+        - "heading_path": List of headings leading to the section.
+        - "content": The content of the section.
     """
     lines = load_markdown(md_path)
 
@@ -107,14 +112,3 @@ def extract_sections_from_markdown(md_path: Path):
         )
 
     return sections
-
-
-if __name__ == "__main__":
-    file_paths = get_file_path(Path(r"D:\SSE\data\markdown_output"), {".md"})
-    for md_path in file_paths:
-        print(f"\n\nProcessing file: {md_path}")
-        sections = extract_sections_from_markdown(md_path)
-        for section in sections[:2]:
-            print("----------------")
-            print(f"heading_path:\n{section['heading_path']}\n")
-            print(f"content:\n{section['content'][:200]}\n")

@@ -1,20 +1,23 @@
 from pathlib import Path
-from docling.document_converter import DocumentConverter
+# from docling.document_converter import DocumentConverter
 
 from semantic_search_engine.ingestion.document_loader import get_file_path
 
 
-def pdf_to_markdown(pdf_path: str, output_dir: str, converter) -> None:
+def pdf_to_markdown(pdf_path: Path, output_dir: Path, converter) -> Path:
     """
     Convert a PDF document to Markdown format.
 
     Args:
-        pdf_path (str): Path to the input PDF file.
-        output_dir (str): Directory where the output Markdown file will be saved.
+        pdf_path (Path): Path to the input PDF file.
+        output_dir (Path): Directory where the output Markdown file will be saved.
 
     Raises:
         ValueError: If the PDF file cannot be converted to Markdown.
     """
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     print(f"Converting now...")
     doc_object = converter.convert(pdf_path)
     md_text = doc_object.document.export_to_markdown()
@@ -25,11 +28,5 @@ def pdf_to_markdown(pdf_path: str, output_dir: str, converter) -> None:
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(md_text)
 
+    return output_path
 
-if __name__ == "__main__":
-    converter = DocumentConverter()
-
-    file_paths = get_file_path(Path(r"D:\SSE\data"), {".pdf"})
-    for pdf_path in file_paths:
-        output_dir = Path(r"D:\SSE\data\markdown_output")
-        pdf_to_markdown(pdf_path, output_dir, converter)
