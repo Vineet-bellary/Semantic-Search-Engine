@@ -10,10 +10,9 @@ def normalize_filename(filename: str) -> str:
     return filename.replace(" ", "_").lower()
 
 
-def get_file_path(data_dir: Path) -> list[Path]:
+def get_file_path(data_dir: Path, file_types: set[str]) -> list[Path]:
     file_paths = []
     for file in data_dir.iterdir():
-        if file.suffix.lower() == ".pdf":
+        if file.suffix.lower() in file_types:
             file_paths.append(file.resolve())
     return file_paths
-
