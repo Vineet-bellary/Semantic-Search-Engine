@@ -4,3 +4,4 @@ data/
 ingested_data/
 .env
 tests/
+misc/
