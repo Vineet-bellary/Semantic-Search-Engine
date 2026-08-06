@@ -10,7 +10,7 @@ HF_TOKEN = os.getenv("HUGGINGFACE_TOKEN_ID")
 
 # Storage directories
 DATA_DIR = ROOT_DIR / "data"
-TEST_DIR = ROOT_DIR / "test"
+TEST_DIR = ROOT_DIR / "tests"
 INGESTED_DATA_DIR = ROOT_DIR / "ingested_data"
 
 # Paramters
