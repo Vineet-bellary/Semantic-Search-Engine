@@ -4,7 +4,8 @@ from collections import defaultdict
 from pathlib import Path
 
 from semantic_search_engine.config import INGESTED_DATA_DIR, TEST_DIR
-from semantic_search_engine.ingestion.representation.embedding import EmbeddingModel
+from semantic_search_engine.ingestion.encoders.embedding import EmbeddingModel
+from semantic_search_engine.models.chunk import SSEChunk
 from semantic_search_engine.retrieval.process_query import (
     preprocess_query,
     validate_query,
@@ -138,7 +139,8 @@ def evaluate(evaluation_json_path: Path, k_values: tuple[int, ...] = (1, 3)):
     Returns:
         None
     """
-    ingestion()
+    if not (INGESTED_DATA_DIR.exists() and any(INGESTED_DATA_DIR.iterdir())):
+        ingestion()
 
     embedding_model = EmbeddingModel()
     device = embedding_model.device
@@ -162,7 +164,9 @@ def evaluate(evaluation_json_path: Path, k_values: tuple[int, ...] = (1, 3)):
         if expected_page is not None:
             expected_page = int(expected_page)
 
-        validate_query(query)
+        if not validate_query(query):
+            raise ValueError(f"Invalid evaluation query: {query}")
+
         query_vector = prepare_query(query, embedding_model)
 
         max_k = min(max(k_values), len(chunks))
@@ -173,13 +177,14 @@ def evaluate(evaluation_json_path: Path, k_values: tuple[int, ...] = (1, 3)):
         top_matches = []
         for score, idx in zip(scores, top_indices):
             idx_int = int(idx.item())
+            chunk = SSEChunk.model_validate(chunks[idx_int])
+            page_number = chunk.pages[0] if chunk.pages else -1
+
             top_matches.append(
                 {
-                    "document_name": normalize_document_name(
-                        chunks[idx_int]["document_name"]
-                    ),
-                    "page_number": int(chunks[idx_int].get("page_number", -1)),
-                    "heading_path": chunks[idx_int].get("heading_path", []),
+                    "document_name": normalize_document_name(chunk.document_name),
+                    "page_number": int(page_number),
+                    "heading_path": chunk.headings,
                     "score": float(score.item()),
                 }
             )

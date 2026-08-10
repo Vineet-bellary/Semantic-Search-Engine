@@ -5,3 +5,4 @@ ingested_data/
 .env
 tests/
 misc/
+logs/

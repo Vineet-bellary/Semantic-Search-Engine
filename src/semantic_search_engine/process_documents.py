@@ -16,7 +16,7 @@ from semantic_search_engine.config import (
 
 
 def ingestion():
-    """Ingest PDF documents from the data directory, convert them to Markdown, extract sections, create chunks, generate embeddings, and save the ingested data."""
+    """Ingest PDF documents from the data directory, convert them to DoclingDocument, adapt to SSEChunk, create chunks, generate embeddings, and save the ingested data."""
 
     file_paths = document_loader.get_file_path(DATA_DIR, file_types={".pdf"})
     document_converter = configure_converter()
