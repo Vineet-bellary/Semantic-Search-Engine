@@ -1,7 +1,7 @@
 from pathlib import Path
 import re
 
-from semantic_search_engine.ingestion.document_loader import get_file_path
+from semantic_search_engine.utils.document_loader import get_file_path
 
 
 def load_markdown(md_path: Path) -> list[str]:

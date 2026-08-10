@@ -1,7 +1,7 @@
 from pathlib import Path
 # from docling.document_converter import DocumentConverter
 
-from semantic_search_engine.ingestion.document_loader import get_file_path
+from semantic_search_engine.utils.document_loader import get_file_path
 
 
 def pdf_to_markdown(pdf_path: Path, output_dir: Path, converter) -> Path:

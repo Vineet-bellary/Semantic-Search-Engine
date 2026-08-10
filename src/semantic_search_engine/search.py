@@ -2,7 +2,7 @@ from pathlib import Path
 import torch
 
 from semantic_search_engine.utils.save_load_metadata import load_ingested_data
-from semantic_search_engine.ingestion.representation.embedding import EmbeddingModel
+from semantic_search_engine.ingestion.encoders.embedding import EmbeddingModel
 from semantic_search_engine.retrieval.process_query import (
     preprocess_query,
     validate_query,
@@ -36,7 +36,6 @@ def search():
     This function loads the ingested data, validates the user's query, generates the query embedding,
     and ranks the chunks based on their similarity to the query. It then displays the top relevant chunks to the user.
     """
-    
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 

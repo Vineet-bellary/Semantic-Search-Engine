@@ -2,13 +2,13 @@ from pathlib import Path
 from docling.document_converter import DocumentConverter
 
 
-from semantic_search_engine.ingestion import (
-    doc_to_markdown,
+from semantic_search_engine.utils import (
     document_loader,
-    markdown_parser,
-    retrieval_chunker,
 )
-from semantic_search_engine.ingestion.representation.embedding import EmbeddingModel
+from semantic_search_engine.ingestion.adapters import markdown_parser
+from semantic_search_engine.ingestion.chunkers import retrieval_chunker
+from semantic_search_engine.ingestion.parsers import doc_to_markdown
+from semantic_search_engine.ingestion.encoders.embedding import EmbeddingModel
 from semantic_search_engine.utils.save_load_metadata import save_ingested_data
 from semantic_search_engine.config import (
     DATA_DIR,
