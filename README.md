@@ -148,13 +148,12 @@ SSE/
 
 ## Next Milestones
 
-1. Add optional vector database backend.
-2. Improve heading/path normalization for more robust evaluation.
-3. Add retrieval regression tests around adapter mapping and ranking outputs.
-4. Add reranking and metadata-based filtering.
+See [docs/roadmap.md](docs/roadmap.md) for the full planned roadmap.
 
 ## Documentation
 
-For milestone-level technical summary, see:
-
-1. `docs/milestone_v4_hybrid_chunk_pipeline.md`
+| File                                                                                                           | Description                                            |
+| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| [docs/architecture.md](docs/architecture.md)                                                                   | Pipeline, module structure, data model, key components |
+| [docs/roadmap.md](docs/roadmap.md)                                                                             | Completed milestones and planned work                  |
+| [docs/milestones/milestone_v4_hybrid_chunk_pipeline.md](docs/milestones/milestone_v4_hybrid_chunk_pipeline.md) | V4 milestone technical summary                         |

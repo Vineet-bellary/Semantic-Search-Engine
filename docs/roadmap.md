@@ -23,7 +23,7 @@
 - Per-document and per-target accuracy breakdowns.
 - Miss reporting with top-k predicted matches.
 
-### V4 — Docling Hybrid Chunk Pipeline _(current)_
+### V4.0 — Docling Hybrid Chunk Pipeline
 
 - Integrated Docling PDF conversion with `DOCLING_LAYOUT_EGRET_LARGE`, OCR, and table-structure extraction.
 - Replaced Markdown-based chunking with Docling `HybridChunker`.
@@ -35,8 +35,12 @@
 
 ---
 
-## Near-Term (V5)
+## V4.1 — Chunking & Retrieval Refinement _(in progress)_
 
+Improvements within the current V4 architecture — no structural change, refining what V4.0 established.
+
+- **Chunk postprocessing** _(active work)_ — refine `HybridChunker` output before embedding to improve chunk quality.
+- **Retrieval quality validation** _(active work)_ — validate retrieval against `tests/evaluation_queries.json` in-process, before persistence work begins.
 - **Relaxed heading matching** — add a configurable soft-match mode to handle verbose financial/legal headings without breaking strict-match tests.
 - **Typed load utility** — return `list[SSEChunk]` directly from `load_ingested_data` as an optional typed mode to avoid repeated `model_validate` calls in search and eval.
 - **Adapter regression tests** — unit tests that assert `SSEChunk` field mapping from known `DocChunk` fixtures (headings, pages, labels, provenance).
@@ -45,13 +49,14 @@
 
 ---
 
-## Medium-Term
+## V5 — Vector Database Backend _(next architectural change)_
 
-- **Vector database backend** — add an optional path (e.g. FAISS or ChromaDB) alongside the current file-based store. The file-based store stays as the default for portability.
-- **Reranking** — add a cross-encoder reranking step between similarity retrieval and result display to improve precision at rank 1.
-- **Metadata filtering** — allow search queries to filter by document name, page range, or label type before ranking.
-- **Multi-query retrieval** — decompose complex queries into sub-queries and merge result sets.
-- **Batch search CLI** — non-interactive mode that reads queries from a file and writes results to JSON, useful for regression testing retrieval quality over time.
+- Replace the current local `.pt`/`.json` artifact store with a persistent vector database (e.g. FAISS or ChromaDB), once V4.1's chunking and retrieval quality work is validated.
+- This is an architectural change, not an in-place refinement — triggers the version bump from V4.x to V5.
+- Reranking — add a cross-encoder reranking step between similarity retrieval and result display to improve precision at rank 1.
+- Metadata filtering — allow search queries to filter by document name, page range, or label type before ranking.
+- Multi-query retrieval — decompose complex queries into sub-queries and merge result sets.
+- Batch search CLI — non-interactive mode that reads queries from a file and writes results to JSON, useful for regression testing retrieval quality over time.
 
 ---
 
@@ -62,3 +67,4 @@
 - **Web UI** — lightweight local frontend for query input and result browsing, replacing the current CLI.
 - **Pluggable embedding models** — swap `all-MiniLM-L6-v2` for larger or domain-specific models (e.g. `bge-large-en`, `e5-mistral`) via config without code changes.
 - **Table and figure retrieval** — separate retrieval paths optimized for tabular content and image-derived text so that figure/table chunks rank appropriately for structured queries.
+- **Support for additional document formats** — extend ingestion beyond PDF (e.g. docx, txt, markdown) once the pipeline architecture is stable.
