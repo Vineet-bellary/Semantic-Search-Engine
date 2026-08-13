@@ -3,11 +3,11 @@ import torch
 from semantic_search_engine.utils.save_load_metadata import load_ingested_data
 from semantic_search_engine.ingestion.encoders.embedding import EmbeddingModel
 from semantic_search_engine.models.chunk import SSEChunk
-from semantic_search_engine.retrieval.process_query import (
+from semantic_search_engine.retrieval.input_handling.process_query import (
     preprocess_query,
     validate_query,
 )
-from semantic_search_engine.retrieval.query import get_query
+from semantic_search_engine.retrieval.input_handling.query import get_query
 from semantic_search_engine.retrieval.similarity import rank_chunks
 from semantic_search_engine.config import INGESTED_DATA_DIR, CONFIDENCE_THRESHOLD
 
@@ -68,7 +68,7 @@ def search():
             f"Heading Path: {heading_path}\n"
             f"Pages: {pages_text}\n"
             f"Score: {score.item():.2f}\n"
-            f"\nChunk Text:\n{chunk.content[:220]}\n"
+            f"\nChunk Text:\n{chunk.content}\n"
         )
 
-        print(f"{'-' * 15} : {sl_no} : {'-' * 15}\n{suggestion}\n{'-' * 100}\n")
+        print(f"{'=' * 75} : {sl_no} : {'=' * 75}\n\n{suggestion}\n")

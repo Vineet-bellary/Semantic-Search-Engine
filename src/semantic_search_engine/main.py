@@ -7,7 +7,6 @@ def main():
     """Main function to ingest documents if not already ingested and perform search."""
     if not (INGESTED_DATA_DIR.exists() and any(INGESTED_DATA_DIR.iterdir())):
         process_documents.ingestion()
-    # process_documents.ingestion()
     search.search()
 
 

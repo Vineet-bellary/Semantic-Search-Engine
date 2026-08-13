@@ -6,7 +6,7 @@ from pathlib import Path
 from semantic_search_engine.config import INGESTED_DATA_DIR, TEST_DIR
 from semantic_search_engine.ingestion.encoders.embedding import EmbeddingModel
 from semantic_search_engine.models.chunk import SSEChunk
-from semantic_search_engine.retrieval.process_query import (
+from semantic_search_engine.retrieval.input_handling.process_query import (
     preprocess_query,
     validate_query,
 )
