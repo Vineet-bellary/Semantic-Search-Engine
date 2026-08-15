@@ -8,6 +8,7 @@ from semantic_search_engine.retrieval.input_handling.process_query import (
     validate_query,
 )
 from semantic_search_engine.retrieval.input_handling.query import get_query
+from semantic_search_engine.retrieval.reranker import CrossEncoderReranker
 from semantic_search_engine.retrieval.similarity import rank_chunks
 from semantic_search_engine.config import INGESTED_DATA_DIR, CONFIDENCE_THRESHOLD
 
@@ -49,21 +50,34 @@ def search():
     preprocessed_query = preprocess_query(query)
     query_vector = embedding_model.embed_query(preprocessed_query)
 
-    scores, top_k_indices = rank_chunks(
+    candidate_count = min(20, len(chunks))
+    scores, candidate_indices = rank_chunks(
         query_vector,
         embeddings,
-        num_suggestions=3,
+        num_suggestions=candidate_count,
         query_text=preprocessed_query,
         chunks=chunks,
     )
 
+    candidates = []
+    for score, idx in zip(scores, candidate_indices):
+        candidate = dict(chunks[int(idx)])
+        candidate["source_index"] = int(idx)
+        candidate["retrieval_score"] = float(score.item())
+        candidates.append(candidate)
+
+    reranked_candidates = CrossEncoderReranker().rerank(
+        preprocessed_query,
+        candidates,
+    )[:3]
+
     print(f"\n{'-' * 100}\nRelevant data found from your documents:\n{'-' * 100}\n")
 
-    for sl_no, (score, idx) in enumerate(zip(scores, top_k_indices), start=1):
-        if score < CONFIDENCE_THRESHOLD:
+    for sl_no, candidate in enumerate(reranked_candidates, start=1):
+        if candidate["retrieval_score"] < CONFIDENCE_THRESHOLD:
             continue
 
-        chunk = SSEChunk.model_validate(chunks[int(idx)])
+        chunk = SSEChunk.model_validate(candidate)
         heading_path = " > ".join(chunk.headings) if chunk.headings else "N/A"
         pages_text = (
             ", ".join(str(page) for page in chunk.pages) if chunk.pages else "N/A"
@@ -74,7 +88,8 @@ def search():
             f"Document Name: {chunk.document_name}\n"
             f"Heading Path: {heading_path}\n"
             f"Pages: {pages_text}\n"
-            f"Score: {score.item():.2f}\n"
+            f"Retrieval Score: {candidate['retrieval_score']:.2f}\n"
+            f"Reranker Score: {candidate['rerank_score']:.2f}\n"
             f"\nChunk Text:\n{chunk.content}\n"
         )
 

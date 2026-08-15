@@ -10,6 +10,7 @@ from semantic_search_engine.retrieval.input_handling.process_query import (
     preprocess_query,
     validate_query,
 )
+from semantic_search_engine.retrieval.reranker import CrossEncoderReranker
 from semantic_search_engine.retrieval.similarity import rank_chunks
 from semantic_search_engine.utils.save_load_metadata import load_ingested_data
 from semantic_search_engine.process_documents import ingestion
@@ -143,6 +144,7 @@ def evaluate(evaluation_json_path: Path, k_values: tuple[int, ...] = (1, 3)):
         ingestion()
 
     embedding_model = EmbeddingModel()
+    reranker = CrossEncoderReranker()
     device = embedding_model.device
 
     chunks, embeddings = load_ingested_data(INGESTED_DATA_DIR, device=device)
@@ -170,18 +172,30 @@ def evaluate(evaluation_json_path: Path, k_values: tuple[int, ...] = (1, 3)):
         query_vector = prepare_query(query, embedding_model)
 
         max_k = min(max(k_values), len(chunks))
+        candidate_count = min(20, len(chunks))
         scores, top_indices = rank_chunks(
             query_vector,
             embeddings,
-            num_suggestions=max_k,
+            num_suggestions=candidate_count,
             query_text=preprocess_query(query),
             chunks=chunks,
         )
 
-        top_matches = []
+        candidates = []
         for score, idx in zip(scores, top_indices):
             idx_int = int(idx.item())
-            chunk = SSEChunk.model_validate(chunks[idx_int])
+            candidate = dict(chunks[idx_int])
+            candidate["source_index"] = idx_int
+            candidate["retrieval_score"] = float(score.item())
+            candidates.append(candidate)
+
+        reranked_candidates = reranker.rerank(preprocess_query(query), candidates)[
+            :max_k
+        ]
+
+        top_matches = []
+        for candidate in reranked_candidates:
+            chunk = SSEChunk.model_validate(candidate)
             page_number = chunk.pages[0] if chunk.pages else -1
 
             top_matches.append(
@@ -189,7 +203,8 @@ def evaluate(evaluation_json_path: Path, k_values: tuple[int, ...] = (1, 3)):
                     "document_name": normalize_document_name(chunk.document_name),
                     "page_number": int(page_number),
                     "heading_path": chunk.headings,
-                    "score": float(score.item()),
+                    "score": candidate["rerank_score"],
+                    "retrieval_score": candidate["retrieval_score"],
                 }
             )
 
