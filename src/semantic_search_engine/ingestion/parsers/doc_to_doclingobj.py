@@ -7,7 +7,7 @@ from docling.datamodel.pipeline_options import (
     LayoutOptions,
 )
 from docling.datamodel.layout_model_specs import DOCLING_LAYOUT_EGRET_LARGE
-from docling.datamodel.base_models import InputFormat
+from docling.datamodel.base_models import InputFormat, DocItemLabel
 
 
 def configure_converter():
@@ -37,6 +37,27 @@ def configure_converter():
     return converter
 
 
+# Testing
+REMOVE_LABELS = {
+    DocItemLabel.FOOTNOTE,
+    DocItemLabel.DOCUMENT_INDEX,
+    DocItemLabel.CHECKBOX_SELECTED,
+    DocItemLabel.CHECKBOX_UNSELECTED,
+}
+
+
+def clean_docling_document(doc):
+    delete_items = []
+
+    for item, _ in doc.iterate_items():
+        if item.label in REMOVE_LABELS:
+            delete_items.append(item)
+
+    doc.delete_items(node_items=delete_items)
+    return doc
+
+
 def parse_doc(pdf_path: Path, converter):
     doc = converter.convert(pdf_path)
-    return doc.document
+    doc = clean_docling_document(doc.document)
+    return doc
