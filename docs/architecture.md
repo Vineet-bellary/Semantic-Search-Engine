@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Semantic Search Engine (SSE) is a local PDF retrieval system. It converts PDFs into structured chunks, embeds them using a sentence-transformer model, and ranks chunks against a user query using cosine similarity.
+The Semantic Search Engine (SSE) is a local PDF retrieval system. It converts PDFs into structured chunks, embeds them using a sentence-transformer model, and ranks chunks against a user query using dense semantic similarity with a lightweight lexical tie-breaker.
 
 The system has three top-level operations: **ingestion**, **search**, and **evaluation**. All three share a common data model (`SSEChunk`) and the same persistence layer (`ingested_data/`).
 
@@ -29,6 +29,7 @@ HybridChunkAdapter  (hybrid_chunk_adapter.py)
     ▼
 Embedding model  (embedding.py)
     │  └─ all-MiniLM-L6-v2 via sentence-transformers
+    │  └─ heading path + chunk content used for embedding
     │
     ▼
 Persistence  (save_load_metadata.py)
@@ -37,6 +38,7 @@ Persistence  (save_load_metadata.py)
     │
     ▼
 Search / Evaluation
+    │  └─ 85% cosine similarity + 15% lexical term overlap
 ```
 
 ---
@@ -69,9 +71,10 @@ src/semantic_search_engine/
 │ └── vectorization.py # Legacy: TF-IDF vectorizer (unused in V4 pipeline)
 │
 ├── retrieval/
-│ ├── process_query.py # Preprocessing and validation of user queries
-│ ├── query.py # CLI input prompt
-│ └── similarity.py # Cosine similarity ranking via torch
+│ ├── input_handling/
+│ │ ├── process_query.py # Query normalization and validation
+│ │ └── query.py # CLI input prompt
+│ └── similarity.py # Hybrid dense/lexical ranking
 │
 └── utils/
 ├── document_loader.py # File discovery from a directory
@@ -128,11 +131,11 @@ Maps each raw `DocChunk` from Docling into `SSEChunk`. It iterates over `meta.do
 
 ### EmbeddingModel (`embedding.py`)
 
-Wraps `SentenceTransformer` (`all-MiniLM-L6-v2`). Accepts either `SSEChunk` objects or legacy dicts. Embeddings are generated as tensors and saved to disk via `torch.save`.
+Wraps `SentenceTransformer` (`all-MiniLM-L6-v2`). Accepts either `SSEChunk` objects or legacy dicts. For canonical chunks, the embedding input contains the heading path followed by the chunk content so section context is retained. The HybridChunker reserves token headroom below the model limit. Embeddings are generated as tensors and saved to disk via `torch.save`.
 
 ### Similarity Ranking (`similarity.py`)
 
-Computes cosine similarity between a query vector and all chunk vectors using `torch.nn.functional.cosine_similarity`, then returns the top-k scores and indices via `torch.topk`.
+Computes cosine similarity between a query vector and all chunk vectors using `torch.nn.functional.cosine_similarity`. When query text and chunk metadata are available, it combines the dense score with exact content and heading term overlap using an 85/15 weighting, then returns the top-k scores and indices via `torch.topk`.
 
 ### Evaluation (`eval.py`)
 
@@ -154,7 +157,7 @@ Heading matching is normalized and tolerant of suffix matches and leaf-heading m
 | `INGESTED_DATA_DIR`    | `ROOT_DIR/ingested_data`                     |
 | `TEST_DIR`             | `ROOT_DIR/tests`                             |
 | `EMBEDDING_MODEL`      | `"all-MiniLM-L6-v2"`                         |
-| `CONFIDENCE_THRESHOLD` | `0.1`                                        |
+| `CONFIDENCE_THRESHOLD` | `0.5`                                        |
 | `HF_TOKEN`             | `HF_TOKEN` or `HUGGINGFACE_TOKEN_ID` env var |
 
 ---

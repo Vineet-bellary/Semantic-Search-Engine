@@ -171,7 +171,11 @@ def evaluate(evaluation_json_path: Path, k_values: tuple[int, ...] = (1, 3)):
 
         max_k = min(max(k_values), len(chunks))
         scores, top_indices = rank_chunks(
-            query_vector, embeddings, num_suggestions=max_k
+            query_vector,
+            embeddings,
+            num_suggestions=max_k,
+            query_text=preprocess_query(query),
+            chunks=chunks,
         )
 
         top_matches = []

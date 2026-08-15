@@ -46,9 +46,16 @@ def search():
         print("Invalid query. Please try again.")
         return
 
-    query_vector = prepare_query(query)
+    preprocessed_query = preprocess_query(query)
+    query_vector = embedding_model.embed_query(preprocessed_query)
 
-    scores, top_k_indices = rank_chunks(query_vector, embeddings, num_suggestions=3)
+    scores, top_k_indices = rank_chunks(
+        query_vector,
+        embeddings,
+        num_suggestions=3,
+        query_text=preprocessed_query,
+        chunks=chunks,
+    )
 
     print(f"\n{'-' * 100}\nRelevant data found from your documents:\n{'-' * 100}\n")
 

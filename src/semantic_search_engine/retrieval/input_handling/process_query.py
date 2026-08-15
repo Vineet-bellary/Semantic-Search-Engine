@@ -2,9 +2,8 @@ import re
 
 
 def preprocess_query(query: str) -> str:
-    """Preprocess the query by converting it to lowercase, removing special characters, and normalizing whitespace."""
-    query = query.lower()
-    query = re.sub(r"[^a-z0-9\s]", "", query)
+    """Normalize query whitespace without removing semantic punctuation."""
+    query = query.strip()
     query = re.sub(r"\s+", " ", query).strip()
     return query
 

@@ -23,15 +23,23 @@ class EmbeddingModel:
         texts = []
         for chunk in chunks:
             if isinstance(chunk, SSEChunk):
-                texts.append(chunk.content)
+                texts.append(self._chunk_embedding_text(chunk))
             else:
-                texts.append(chunk.get("content", chunk.get("text_chunk", "")))
+                content = chunk.get("content", chunk.get("text_chunk", ""))
+                headings = chunk.get("headings", [])
+                heading_text = " > ".join(headings)
+                texts.append(f"{heading_text}\n{content}" if heading_text else content)
 
         embeddings = self.model.encode(
             texts, convert_to_tensor=True, show_progress_bar=True, device=self.device
         )
 
         return embeddings
+
+    def _chunk_embedding_text(self, chunk: SSEChunk) -> str:
+        """Include section context so embeddings retain document structure."""
+        heading_text = " > ".join(chunk.headings)
+        return f"{heading_text}\n{chunk.content}" if heading_text else chunk.content
 
     def embed_query(self, query: str):
         embedd_query = self.model.encode(
