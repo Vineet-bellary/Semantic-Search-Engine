@@ -91,6 +91,7 @@ six==1.17.0
 soupsieve==2.9.1
 sympy==1.14.0
 tabulate==0.10.0
+textual==8.2.8
 threadpoolctl==3.6.0
 tokenizers==0.22.2
 torch==2.13.0+cu130

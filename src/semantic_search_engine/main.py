@@ -1,13 +1,9 @@
-from semantic_search_engine.config import INGESTED_DATA_DIR
-
-from semantic_search_engine import process_documents, search
+from semantic_search_engine.ui.app import run_app
 
 
 def main():
-    """Main function to ingest documents if not already ingested and perform search."""
-    if not (INGESTED_DATA_DIR.exists() and any(INGESTED_DATA_DIR.iterdir())):
-        process_documents.ingestion()
-    search.search()
+    """Launch the Textual search application."""
+    run_app()
 
 
 if __name__ == "__main__":

@@ -12,9 +12,7 @@ class EmbeddingModel:
         self.model = self.load_model()
 
     def load_model(self):
-        model = SentenceTransformer(
-            self.model_name, device=self.device, token=HF_TOKEN, local_files_only=True
-        )
+        model = SentenceTransformer(self.model_name, device=self.device, token=HF_TOKEN)
         return model
 
     def embed_chunks(self, chunks: list[dict] | list[SSEChunk]):

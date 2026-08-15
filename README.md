@@ -11,7 +11,8 @@ In simple terms: it reads documents, understands them in chunks, and finds the m
 3. A stable internal schema (`SSEChunk`) for all downstream steps.
 4. Embedding generation and persistence for fast retrieval.
 5. Search output with document name, heading path, page hints, score, and text preview.
-6. Automated evaluation with Accuracy@1 and Accuracy@3.
+6. Cross-encoder reranking with measured Accuracy@1 and Accuracy@3 improvements.
+7. A keyboard-first Textual interface for interactive search.
 
 ## High-Level Pipeline
 
@@ -96,8 +97,10 @@ This creates:
 From `src/` run:
 
 ```powershell
-python -m semantic_search_engine.search
+python -m semantic_search_engine.main
 ```
+
+The Textual app loads the embedding and reranker models, then provides a two-pane search interface. Enter a query, press `Enter`, and use the arrow keys to inspect the three final reranked results. `Q` exits the app.
 
 ### 5) Run evaluation
 
@@ -126,7 +129,8 @@ SSE/
     models/
     retrieval/
     process_documents.py
-    search.py
+    search.py              # Legacy plain-text search output
+    ui/app.py              # Textual interactive search UI
     eval.py
   tests/
     evaluation_queries.json
@@ -144,7 +148,7 @@ SSE/
 
 1. Some documents produce very long headings, which can make strict heading-path matching brittle.
 2. If Hugging Face auth is missing, model downloads may be slower or rate-limited.
-3. Very long sections can trigger tokenizer length warnings in some model calls.
+3. Docling may report a native `std::bad_alloc` for an individual PDF page during preprocessing; the ingestion run continues, but that page may have incomplete OCR or layout data.
 
 ## Next Milestones
 
@@ -152,8 +156,9 @@ See [docs/roadmap.md](docs/roadmap.md) for the full planned roadmap.
 
 ## Documentation
 
-| File                                                                                                           | Description                                            |
-| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| [docs/architecture.md](docs/architecture.md)                                                                   | Pipeline, module structure, data model, key components |
-| [docs/roadmap.md](docs/roadmap.md)                                                                             | Completed milestones and planned work                  |
-| [docs/milestones/milestone_v4_hybrid_chunk_pipeline.md](docs/milestones/milestone_v4_hybrid_chunk_pipeline.md) | V4 milestone technical summary                         |
+| File                                                                                                                 | Description                                            |
+| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| [docs/architecture.md](docs/architecture.md)                                                                         | Pipeline, module structure, data model, key components |
+| [docs/roadmap.md](docs/roadmap.md)                                                                                   | Completed milestones and planned work                  |
+| [docs/milestones/milestone_v4_hybrid_chunk_pipeline.md](docs/milestones/milestone_v4_hybrid_chunk_pipeline.md)       | V4 milestone technical summary                         |
+| [docs/milestones/milestone_v4_1_retrieval_optimization.md](docs/milestones/milestone_v4_1_retrieval_optimization.md) | V4.1 retrieval optimization and evaluation results     |
