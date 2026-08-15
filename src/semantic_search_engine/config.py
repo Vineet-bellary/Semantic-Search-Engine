@@ -14,7 +14,7 @@ TEST_DIR = ROOT_DIR / "tests"
 INGESTED_DATA_DIR = ROOT_DIR / "ingested_data"
 
 # Paramters
-CONFIDENCE_THRESHOLD = 0.1
+CONFIDENCE_THRESHOLD = 0.5
 
 # Models
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
