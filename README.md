@@ -1,320 +1,164 @@
 # Semantic Search Engine
 
-A lightweight semantic search system built from scratch to understand and engineer a complete retrieval pipeline for personal document search.
+This project is a personal semantic search system for PDF documents.
 
-The project focuses on document ingestion, retrieval optimization, embedding-based search, and evaluation-driven improvements.
+In simple terms: it reads documents, understands them in chunks, and finds the most relevant parts when a user asks a question.
 
-## Overview
+## What This Milestone Delivers (V4)
 
-### System pipeline
+1. PDF ingestion using Docling.
+2. Hybrid chunking for structure-aware document segments.
+3. A stable internal schema (`SSEChunk`) for all downstream steps.
+4. Embedding generation and persistence for fast retrieval.
+5. Search output with document name, heading path, page hints, score, and text preview.
+6. Cross-encoder reranking with measured Accuracy@1 and Accuracy@3 improvements.
+7. A keyboard-first Textual interface for interactive search.
 
-```text
-Documents
-    |
-    v
-PDF Conversion
-    |
-    v
-Markdown Structure Extraction
-    |
-    v
-Retrieval-Optimized Chunking
-    |
-    v
-Embedding Generation
-    |
-    v
-Vector Search
-    |
-    v
-Ranked Results
-```
-
-## Features Implemented
-
-### Multi-document ingestion
-
-- Supports ingestion of multiple PDF documents.
-- Automatically discovers documents from the data directory.
-- Converts PDFs into Markdown representation.
-- Preserves document structure using heading paths.
-
-### Retrieval-optimized chunks
-
-Current chunk format:
-
-```json
-{
-  "chunk_id": 0,
-  "document_name": "artificial_intelligence_and_machine_learning",
-  "heading_path": [
-    "Foundations of Artificial Intelligence and Machine Learning",
-    "1. Introduction to Machine Learning Fundamentals (Part 1)"
-  ],
-  "text_chunk": "Machine learning represents a paradigm shift..."
-}
-```
-
----
-
-## Version 0: TF-IDF Retrieval System
-
-Implemented a classical information retrieval pipeline.
-
-Pipeline:
+## High-Level Pipeline
 
 ```text
-PDF Documents
-      |
-      v
-Text Extraction
-      |
-      v
-Fixed-Size Chunking
-      |
-      v
-TF-IDF Vectorization
-      |
-      v
-Cosine Similarity Search
-      |
-      v
-Top-K Results
-```
-
-This version was used to understand traditional lexical retrieval.
-
----
-
-## Version 1: Dense Embedding Retrieval
-
-TF-IDF was limited by keyword overlap.
-
-The system was upgraded to semantic retrieval using dense embeddings.
-
-Embedding pipeline:
-
-```text
-Text Chunk
+PDF files in data/
     |
     v
-Sentence Transformer
+Docling conversion
     |
     v
-384-dimensional embedding
+Hybrid chunking
     |
     v
-Similarity Search
-```
-
-Current embedding model:
-
-```text
-all-MiniLM-L6-v2
-```
-
-Similarity ranking uses cosine similarity.
-
----
-
-## Version 2: Document Structure Experiments
-
-Experimented with structure-aware chunking approaches.
-
-Goals:
-
-- Preserve document hierarchy.
-- Improve semantic retrieval.
-- Avoid splitting related information.
-
-Experiments included Docling-based chunking strategies.
-
-Observation:
-
-Document structure alone is not enough. Chunks need to be optimized for retrieval rather than only representing document hierarchy.
-
----
-
-## Version 3: Markdown-Based Retrieval-Optimized Chunking
-
-The current ingestion architecture.
-
-### Motivation
-
-Instead of relying on generic chunkers, the system converts documents into Markdown and builds chunks using:
-
-- Section headings
-- Heading hierarchy
-- Section content
-- Maximum chunk size constraints
-
-This keeps meaningful context together while producing retrieval-friendly chunks.
-
-Pipeline:
-
-```text
-PDF
- |
- v
-Docling Converter
- |
- v
-Markdown Document
- |
- v
-Heading Parser
- |
- v
-Retrieval Chunker
- |
- v
-Embeddings
- |
- v
-Vector Index
-```
-
-Current chunk statistics:
-
-```text
-Total chunks: 165
-
-Minimum chunk size: 254
-Maximum chunk size: 327
-Average chunk size: 279.12
-```
-
----
-
-## Retrieval System
-
-Query flow:
-
-```text
-User Query
+Adapter: raw chunk -> SSEChunk
     |
     v
-Sentence Transformer
+Embeddings (all-MiniLM-L6-v2)
     |
     v
-Query Embedding
+Save artifacts (chunks.json + embeddings.pt)
     |
     v
-Cosine Similarity
-    |
-    v
-Top-K Chunks
-    |
-    v
-Document + Heading + Content
+Search / Evaluation
 ```
 
-Returned information:
+## Why This Exists
 
-- Document name
-- Heading path
-- Similarity score
-- Relevant text chunk
+This repository is both:
 
----
+1. A usable local search tool for personal PDFs.
+2. An engineering learning project focused on retrieval quality, chunk design, and measurable evaluation.
 
-## Evaluation Framework
+## Core Data Model
 
-The project includes an evaluation pipeline.
+`SSEChunk` currently stores:
 
-Metrics:
+1. `chunk_id`
+2. `document_name`
+3. `order`
+4. `content`
+5. `headings`
+6. `pages`
+7. `labels`
+8. `doc_refs`
+9. `provenance`
+10. `captions`
+
+This unified schema is used across ingestion, storage, search, and evaluation.
+
+## Quick Start
+
+### 1) Setup
+
+Create and activate a Python environment, then install project dependencies.
+
+### 2) Configure environment variables
+
+Create `.env` at project root. Important values include:
+
+```env
+HUGGINGFACE_TOKEN_ID=your_hf_token
+HF_TOKEN=your_hf_token
+```
+
+Both names are useful because different components may read different variable names.
+
+### 3) Ingest documents
+
+From `src/` run:
+
+```powershell
+python -m semantic_search_engine.process_documents
+```
+
+This creates:
+
+1. `ingested_data/chunks.json`
+2. `ingested_data/embeddings.pt`
+
+### 4) Run search
+
+From `src/` run:
+
+```powershell
+python -m semantic_search_engine.main
+```
+
+The Textual app loads the embedding and reranker models, then provides a two-pane search interface. Enter a query, press `Enter`, and use the arrow keys to inspect the three final reranked results. `Q` exits the app.
+
+### 5) Run evaluation
+
+From `src/` run:
+
+```powershell
+python -m semantic_search_engine.eval
+```
+
+Evaluation queries are in `tests/evaluation_queries.json`.
+
+## Repository Layout (Current)
 
 ```text
-Accuracy@1:
-First retrieved result contains expected information
-
-Accuracy@3:
-Expected information appears in top three results
+SSE/
+  data/                  # input PDFs
+  ingested_data/         # saved chunks + embeddings
+  logs/                  # run logs
+  docs/                  # project documentation
+  src/semantic_search_engine/
+    ingestion/
+      adapters/
+      chunkers/
+      encoders/
+      parsers/
+    models/
+    retrieval/
+    process_documents.py
+    search.py              # Legacy plain-text search output
+    ui/app.py              # Textual interactive search UI
+    eval.py
+  tests/
+    evaluation_queries.json
 ```
 
-Evaluation workflow:
+## Current Configuration Choices
 
-```text
-Query
- |
- v
-Search System
- |
- v
-Top-K Results
- |
- v
-Compare With Expected Result
- |
- v
-Calculate Retrieval Accuracy
-```
+1. Layout model: `DOCLING_LAYOUT_EGRET_LARGE`
+2. OCR: enabled
+3. Table structure extraction: enabled
+4. Code/formula enrichment: disabled (for stability and speed)
+5. Accelerator: CUDA when available, otherwise CPU
 
----
+## Known Limitations
 
-## Engineering Practices
+1. Some documents produce very long headings, which can make strict heading-path matching brittle.
+2. If Hugging Face auth is missing, model downloads may be slower or rate-limited.
+3. Docling may report a native `std::bad_alloc` for an individual PDF page during preprocessing; the ingestion run continues, but that page may have incomplete OCR or layout data.
 
-Implemented:
+## Next Milestones
 
-- Modular Python package architecture
-- Separate ingestion and retrieval pipelines
-- Config-driven parameters
-- Persistent ingestion artifacts
-- Evaluation framework
-- GPU-accelerated embedding generation
-- Reproducible experiments
+See [docs/roadmap.md](docs/roadmap.md) for the full planned roadmap.
 
----
+## Documentation
 
-## Project Structure
-
-```text
-semantic-search-engine/
-
-src/
-|
-└── semantic_search_engine/
-    |
-    ├── ingestion/
-    │   ├── document_loader.py
-    │   ├── doc_to_markdown.py
-    │   ├── markdown_chunker.py
-    │   ├── retrieval_chunker.py
-    │   └── representation/
-    │       ├── embedding.py
-    │       └── vectorization.py
-    |
-    ├── retrieval/
-    |
-    ├── evaluation/
-    |
-    ├── config.py
-    └── main.py
-```
-
----
-
-## Future Improvements
-
-Planned:
-
-- Hybrid retrieval (BM25 + embeddings)
-- Metadata filtering
-- Reranking models
-- Better evaluation datasets
-- Multiple file format support
-- Vector database integration
-- Query expansion
-- Retrieval-Augmented Generation (RAG)
-
----
-
-## Key Learnings
-
-Through this project:
-
-- Designed an end-to-end semantic retrieval system.
-- Compared lexical and semantic retrieval methods.
-- Learned how chunking impacts retrieval quality.
-- Built evaluation-driven optimization workflows.
-- Implemented dense retrieval without depending on frameworks like LangChain.
+| File                                                                                                                 | Description                                            |
+| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| [docs/architecture.md](docs/architecture.md)                                                                         | Pipeline, module structure, data model, key components |
+| [docs/roadmap.md](docs/roadmap.md)                                                                                   | Completed milestones and planned work                  |
+| [docs/milestones/milestone_v4_hybrid_chunk_pipeline.md](docs/milestones/milestone_v4_hybrid_chunk_pipeline.md)       | V4 milestone technical summary                         |
+| [docs/milestones/milestone_v4_1_retrieval_optimization.md](docs/milestones/milestone_v4_1_retrieval_optimization.md) | V4.1 retrieval optimization and evaluation results     |

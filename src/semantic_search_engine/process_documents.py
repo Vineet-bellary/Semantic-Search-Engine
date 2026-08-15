@@ -1,14 +1,13 @@
-from pathlib import Path
-from docling.document_converter import DocumentConverter
-
-
-from semantic_search_engine.utils import (
-    document_loader,
+from semantic_search_engine.utils import document_loader
+from semantic_search_engine.ingestion.adapters.hybrid_chunk_adapter import (
+    HybridChunkAdapter,
 )
-from semantic_search_engine.ingestion.adapters import markdown_parser
-from semantic_search_engine.ingestion.chunkers import retrieval_chunker
-from semantic_search_engine.ingestion.parsers import doc_to_markdown
+from semantic_search_engine.ingestion.chunkers.hybrid_chunker import hybrid_chunk
 from semantic_search_engine.ingestion.encoders.embedding import EmbeddingModel
+from semantic_search_engine.ingestion.parsers.doc_to_doclingobj import (
+    configure_converter,
+    parse_doc,
+)
 from semantic_search_engine.utils.save_load_metadata import save_ingested_data
 from semantic_search_engine.config import (
     DATA_DIR,
@@ -17,21 +16,19 @@ from semantic_search_engine.config import (
 
 
 def ingestion():
-    """Ingest PDF documents from the data directory, convert them to Markdown, extract sections, create chunks, generate embeddings, and save the ingested data."""
+    """Ingest PDF documents from the data directory, convert them to DoclingDocument, adapt to SSEChunk, create chunks, generate embeddings, and save the ingested data."""
 
     file_paths = document_loader.get_file_path(DATA_DIR, file_types={".pdf"})
-    markdown_dir = Path(DATA_DIR) / "markdown"
+    document_converter = configure_converter()
+    chunk_adapter = HybridChunkAdapter()
     embedding_model = EmbeddingModel()
-    document_converter = DocumentConverter()
     all_chunks = []
     print(f"\nIngesting data from {len(file_paths)} PDF files in {DATA_DIR}...\n")
     for pdf_path in file_paths:
-        pdf_to_markdown = doc_to_markdown.pdf_to_markdown(
-            pdf_path, markdown_dir, document_converter
-        )
-        sections = markdown_parser.extract_sections_from_markdown(pdf_to_markdown)
-        chunks = retrieval_chunker.create_chunks(sections, pdf_path)
-        all_chunks.extend(chunks)
+        doc = parse_doc(pdf_path, document_converter)
+        raw_chunks = hybrid_chunk(doc)
+        adapted_chunks = chunk_adapter.extract_info_chunk(raw_chunks)
+        all_chunks.extend(adapted_chunks)
 
     embeddings = embedding_model.embed_chunks(all_chunks)
 

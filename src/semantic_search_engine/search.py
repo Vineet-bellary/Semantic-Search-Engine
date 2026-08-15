@@ -1,13 +1,14 @@
-from pathlib import Path
 import torch
 
 from semantic_search_engine.utils.save_load_metadata import load_ingested_data
 from semantic_search_engine.ingestion.encoders.embedding import EmbeddingModel
-from semantic_search_engine.retrieval.process_query import (
+from semantic_search_engine.models.chunk import SSEChunk
+from semantic_search_engine.retrieval.input_handling.process_query import (
     preprocess_query,
     validate_query,
 )
-from semantic_search_engine.retrieval.query import get_query
+from semantic_search_engine.retrieval.input_handling.query import get_query
+from semantic_search_engine.retrieval.reranker import CrossEncoderReranker
 from semantic_search_engine.retrieval.similarity import rank_chunks
 from semantic_search_engine.config import INGESTED_DATA_DIR, CONFIDENCE_THRESHOLD
 
@@ -41,26 +42,55 @@ def search():
 
     chunks, embeddings = load_ingested_data(INGESTED_DATA_DIR, device=device)
 
-    if validate_query(query := get_query()):
-        query_vector = prepare_query(query)
+    query = get_query()
+    if not validate_query(query):
+        print("Invalid query. Please try again.")
+        return
 
-    scores, top_k_indices = rank_chunks(query_vector, embeddings, num_suggestions=3)
+    preprocessed_query = preprocess_query(query)
+    query_vector = embedding_model.embed_query(preprocessed_query)
+
+    candidate_count = min(20, len(chunks))
+    scores, candidate_indices = rank_chunks(
+        query_vector,
+        embeddings,
+        num_suggestions=candidate_count,
+        query_text=preprocessed_query,
+        chunks=chunks,
+    )
+
+    candidates = []
+    for score, idx in zip(scores, candidate_indices):
+        candidate = dict(chunks[int(idx)])
+        candidate["source_index"] = int(idx)
+        candidate["retrieval_score"] = float(score.item())
+        candidates.append(candidate)
+
+    reranked_candidates = CrossEncoderReranker().rerank(
+        preprocessed_query,
+        candidates,
+    )[:3]
 
     print(f"\n{'-' * 100}\nRelevant data found from your documents:\n{'-' * 100}\n")
 
-    for sl_no, (score, idx) in enumerate(zip(scores, top_k_indices)):
-        # chunk =  chunk_id, document_name, page_number, chunk_text
-        if score < CONFIDENCE_THRESHOLD:
+    for sl_no, candidate in enumerate(reranked_candidates, start=1):
+        if candidate["retrieval_score"] < CONFIDENCE_THRESHOLD:
             continue
 
-        chunk = chunks[idx]
-
-        suggestion = (
-            f"Chunk ID: {chunk['chunk_id']}\n"
-            f"Document Name: {chunk['document_name']}\n"
-            f"heading_path: {chunk['heading_path']}\n"
-            f"Score: {score.item():.2f}\n"
-            f"\nChunk Text:\n{chunk['text_chunk'][:50]}\n"
+        chunk = SSEChunk.model_validate(candidate)
+        heading_path = " > ".join(chunk.headings) if chunk.headings else "N/A"
+        pages_text = (
+            ", ".join(str(page) for page in chunk.pages) if chunk.pages else "N/A"
         )
 
-        print(f"{'-' * 15} : {sl_no + 1} : {'-' * 15}\n{suggestion}\n{'-' * 100}\n")
+        suggestion = (
+            f"Chunk ID: {chunk.chunk_id}\n"
+            f"Document Name: {chunk.document_name}\n"
+            f"Heading Path: {heading_path}\n"
+            f"Pages: {pages_text}\n"
+            f"Retrieval Score: {candidate['retrieval_score']:.2f}\n"
+            f"Reranker Score: {candidate['rerank_score']:.2f}\n"
+            f"\nChunk Text:\n{chunk.content}\n"
+        )
+
+        print(f"{'=' * 75} : {sl_no} : {'=' * 75}\n\n{suggestion}\n")
