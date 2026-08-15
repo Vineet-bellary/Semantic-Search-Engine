@@ -42,6 +42,16 @@ final score = 0.85 * cosine similarity + 0.15 * lexical overlap
 
 Lexical overlap is computed from non-stopword terms shared between the normalized query and the chunk's headings plus content. The lexical component improves precision for section-specific queries while keeping semantic similarity dominant.
 
+### Cross-encoder reranking
+
+Search and evaluation retrieve the top 20 candidates with the hybrid ranker, then score query-candidate pairs with `cross-encoder/ms-marco-MiniLM-L-6-v2`. The final ordering uses a normalized blend:
+
+```text
+final score = 0.65 * cross-encoder score + 0.35 * first-stage score
+```
+
+The reranker runs at query time and does not require regenerating the stored embeddings.
+
 ## Evaluation
 
 The benchmark contains 70 queries from `tests/evaluation_queries.json`.
@@ -49,9 +59,9 @@ The benchmark contains 70 queries from `tests/evaluation_queries.json`.
 | Metric     |    V4 baseline |    V4.1 result |
 | ---------- | -------------: | -------------: |
 | Accuracy@1 | 54/70 (77.14%) | 58/70 (82.86%) |
-| Accuracy@3 | 61/70 (87.14%) | 66/70 (94.29%) |
+| Accuracy@3 | 61/70 (87.14%) | 67/70 (95.71%) |
 
-The final ranking configuration preserved the V4.1 Accuracy@1 improvement and raised Accuracy@3 by an additional point compared with heading-aware dense retrieval alone.
+The final ranking configuration preserved the V4.1 Accuracy@1 improvement and raised Accuracy@3 by an additional two points compared with the original V4 baseline.
 
 ## Final Artifacts
 
@@ -78,4 +88,4 @@ The conversion run continues, but the affected page may have incomplete OCR or l
 - Add regression tests for tokenizer-aligned chunk sizes and hybrid ranking.
 - Record per-document and per-target benchmark results as a versioned baseline.
 - Investigate the remaining Docling page-level allocation failure.
-- Evaluate a reranker only after the current chunking and ranking baseline is protected by tests.
+- Tune candidate count and reranker weighting only after the current pipeline is protected by regression tests.

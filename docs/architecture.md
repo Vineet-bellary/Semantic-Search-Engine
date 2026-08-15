@@ -39,6 +39,7 @@ Persistence  (save_load_metadata.py)
     ▼
 Search / Evaluation
     │  └─ 85% cosine similarity + 15% lexical term overlap
+    │  └─ top 20 candidates reranked with CrossEncoder
 ```
 
 ---
@@ -74,6 +75,7 @@ src/semantic_search_engine/
 │ ├── input_handling/
 │ │ ├── process_query.py # Query normalization and validation
 │ │ └── query.py # CLI input prompt
+│ ├── reranker.py # Cross-encoder second-stage reranking
 │ └── similarity.py # Hybrid dense/lexical ranking
 │
 └── utils/
@@ -136,6 +138,10 @@ Wraps `SentenceTransformer` (`all-MiniLM-L6-v2`). Accepts either `SSEChunk` obje
 ### Similarity Ranking (`similarity.py`)
 
 Computes cosine similarity between a query vector and all chunk vectors using `torch.nn.functional.cosine_similarity`. When query text and chunk metadata are available, it combines the dense score with exact content and heading term overlap using an 85/15 weighting, then returns the top-k scores and indices via `torch.topk`.
+
+### Cross-Encoder Reranking (`reranker.py`)
+
+Search and evaluation first retrieve the top 20 candidates with the dense/lexical ranker. `CrossEncoderReranker` scores each query-candidate pair with `cross-encoder/ms-marco-MiniLM-L-6-v2`. Normalized cross-encoder and first-stage scores are combined using a 65/35 weighting. This preserves strong first-stage candidates while improving ordering among close results. Reranking is query-time only and does not require regenerating stored embeddings.
 
 ### Evaluation (`eval.py`)
 

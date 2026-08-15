@@ -43,6 +43,7 @@ Improvements within the current V4 architecture — no structural change, refini
 - **Heading-aware embeddings** — prepend each chunk's heading path to its embedding input while preserving the canonical chunk content separately.
 - **Query normalization** — normalize whitespace without deleting punctuation or non-ASCII query content.
 - **Hybrid ranking** — combine dense cosine similarity with exact query-term overlap across headings and content using an 85/15 weighting.
+- **Cross-encoder reranking** — retrieve 20 candidates with the hybrid ranker, then rerank query-candidate pairs with `cross-encoder/ms-marco-MiniLM-L-6-v2` using a normalized 65/35 blend with first-stage scores.
 - **Retrieval quality validation** — regenerated artifacts and evaluated 70 benchmark queries before and after optimization.
 - **Relaxed heading matching** — add a configurable soft-match mode to handle verbose financial/legal headings without breaking strict-match tests.
 - **Typed load utility** — return `list[SSEChunk]` directly from `load_ingested_data` as an optional typed mode to avoid repeated `model_validate` calls in search and eval.
@@ -53,7 +54,7 @@ Improvements within the current V4 architecture — no structural change, refini
 Measured result for the V4.1 configuration:
 
 - Accuracy@1 improved from 77.14% (54/70) to 82.86% (58/70).
-- Accuracy@3 improved from 87.14% (61/70) to 94.29% (66/70).
+- Accuracy@3 improved from 87.14% (61/70) to 95.71% (67/70).
 - Final ingestion produced 966 chunks and embeddings with shape `(966, 384)`.
 
 Known limitation: Docling can still report a native `std::bad_alloc` for an individual PDF page during preprocessing. The ingestion run continues, but that page may have incomplete OCR or layout data.
@@ -64,7 +65,7 @@ Known limitation: Docling can still report a native `std::bad_alloc` for an indi
 
 - Replace the current local `.pt`/`.json` artifact store with a persistent vector database (e.g. FAISS or ChromaDB), once V4.1's chunking and retrieval quality work is validated.
 - This is an architectural change, not an in-place refinement — triggers the version bump from V4.x to V5.
-- Reranking — add a cross-encoder reranking step between similarity retrieval and result display to improve precision at rank 1.
+- Reranking — evaluate larger or domain-specific cross-encoders if latency and benchmark coverage justify the additional cost.
 - Metadata filtering — allow search queries to filter by document name, page range, or label type before ranking.
 - Multi-query retrieval — decompose complex queries into sub-queries and merge result sets.
 - Batch search CLI — non-interactive mode that reads queries from a file and writes results to JSON, useful for regression testing retrieval quality over time.
