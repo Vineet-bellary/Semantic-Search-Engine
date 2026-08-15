@@ -37,16 +37,19 @@ def configure_converter():
     return converter
 
 
-# Testing
 REMOVE_LABELS = {
     DocItemLabel.FOOTNOTE,
     DocItemLabel.DOCUMENT_INDEX,
     DocItemLabel.CHECKBOX_SELECTED,
     DocItemLabel.CHECKBOX_UNSELECTED,
+    DocItemLabel.REFERENCE,
+    DocItemLabel.PICTURE,
+    DocItemLabel.PAGE_FOOTER,
+    DocItemLabel.PAGE_HEADER,
 }
 
 
-def clean_docling_document(doc):
+def filter_retrieval_noise(doc):
     delete_items = []
 
     for item, _ in doc.iterate_items():
@@ -59,5 +62,5 @@ def clean_docling_document(doc):
 
 def parse_doc(pdf_path: Path, converter):
     doc = converter.convert(pdf_path)
-    doc = clean_docling_document(doc.document)
+    doc = filter_retrieval_noise(doc.document)
     return doc
